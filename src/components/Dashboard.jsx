@@ -1,4 +1,79 @@
 
+const dataFetch = async (url, head) => {
+    return fetch(`https://mock-backend-hintro.vercel.app${url}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "x-user-id": `${head}`
+        }
+    }).then((res) => res.json());
+};
+
+const profile = await dataFetch("/api/auth/profile", "u2");
+const dashboard = await dataFetch("/api/auth/dashboard", "u2");
+const stats = await dataFetch("/api/call-sessions/stats", "u2");
+
+console.log("Profile:", profile);
+console.log("Dashboard:", dashboard);
+console.log("Stats:", stats);
+
+let { totalSessions, averageDuration, totalAIInteractions } = stats;
+const setValue = () => {
+    totalSessions = Number.isFinite(Number(totalSessions)) ? Number(totalSessions) : 0;
+    // keep averageDuration numeric (seconds or milliseconds) — format later when rendering
+    averageDuration = Number.isFinite(Number(averageDuration)) ? Number(averageDuration) : 0;
+    totalAIInteractions = Number.isFinite(Number(totalAIInteractions)) ? Number(totalAIInteractions) : 0;
+};
+
+// Format a duration value into "Xm Ysec". Accepts seconds or milliseconds.
+const formatDuration = (value) => {
+    // If already formatted like "14m 22sec", return as-is
+    if (typeof value === 'string' && value.includes('m') && value.includes('sec')) return value;
+    if (value == null) return '0m 0sec';
+
+    let secs = Number(value);
+    if (!Number.isFinite(secs)) return '0m 0sec';
+
+    // API returns seconds; treat value as seconds and round
+    secs = Math.round(secs);
+
+    if (secs < 0) return '0m 0sec';
+
+    const mins = Math.floor(secs / 60);
+    const rem = secs % 60;
+    return `${mins}m ${rem}sec`;
+};
+
+setValue();
+
+// Format an ISO timestamp into relative time like "5m ago", "2h ago", "3 days ago"
+const formatRelativeTime = (iso) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '-';
+
+    const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (secs < 0) return 'just now';
+    if (secs < 60) return `${secs}sec ago`;
+
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} days ago`;
+
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
+};
+
+const lastSessionRaw = Array.isArray(stats?.lastSession) && stats.lastSession.length ? stats.lastSession[0] : null;
+const lastSessionRelative = formatRelativeTime(lastSessionRaw);
+
 const sidebarItems = [
     { label: "Dashboard", active: true, icon: "dashboard" },
     { label: "Call Insights", icon: "phone" },
@@ -8,10 +83,10 @@ const sidebarItems = [
 ];
 
 const statCards = [
-    { title: "Total Sessions", value: "0", color: "bg-red-100", icon: "pie" },
-    { title: "Average Duration", value: "0", color: "bg-cyan-100", icon: "clock" },
-    { title: "AI Used", value: "0", color: "bg-green-100", icon: "spark" },
-    { title: "Last Session", value: "-", color: "bg-violet-100", icon: "calendar" },
+    { title: "Total Sessions", value: totalSessions, color: "bg-red-100", icon: "pie" },
+    { title: "Average Duration", value: averageDuration, color: "bg-cyan-100", icon: "clock" },
+    { title: "AI Used", value: ` ${totalAIInteractions} times`, color: "bg-green-100", icon: "spark" },
+    { title: "Last Session", value: lastSessionRelative || '-', color: "bg-violet-100", icon: "calendar" },
 ];
 
 const DashboardIcon = ({ type, className = "size-4" }) => {
@@ -146,19 +221,22 @@ const Dashboard = () => {
                         </section>
 
                         <section className="grid gap-3 grid-cols-2 xl:grid-cols-4">
-                            {statCards.map((card) => (
-                                <article key={card.title} className="rounded-xl border border-zinc-300 bg-[#f4f4f4] px-2 sm:px-4 py-3">
-                                    <div className="flex items-center gap-3 md:gap-6">
-                                        <div className={`flex size-10 sm:size-15 items-center justify-center rounded-xl text-zinc-700 ${card.color}`}>
-                                            <DashboardIcon type={card.icon} className="size-7" />
+                            {statCards.map((card) => {
+                                const displayValue = card.title === 'Average Duration' ? formatDuration(card.value) : (card.value ?? 0);
+                                return (
+                                    <article key={card.title} className="rounded-xl border border-zinc-300 bg-[#f4f4f4] px-2 sm:px-4 py-3">
+                                        <div className="flex items-center gap-3 md:gap-6">
+                                            <div className={`flex size-10 sm:size-15 items-center justify-center rounded-xl text-zinc-700 ${card.color}`}>
+                                                <DashboardIcon type={card.icon} className="size-7" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm sm:text-lg font-medium leading-none">{card.title}</h3>
+                                                <p className="mt-2 text-lg sm:text-2xl font-bold leading-none">{displayValue}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-sm sm:text-lg font-medium leading-none">{card.title}</h3>
-                                            <p className="mt-2 text-lg sm:text-2xl font-bold leading-none">{card.value}</p>
-                                        </div>
-                                    </div>
-                                </article>
-                            ))}
+                                    </article>
+                                );
+                            })}
                         </section>
 
                         <section className="mt-10">
@@ -193,8 +271,8 @@ const Dashboard = () => {
                                     <li key={item.label}>
                                         <button
                                             className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
-                                                    ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
-                                                    : "text-zinc-700 hover:bg-zinc-100"
+                                                ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
+                                                : "text-zinc-700 hover:bg-zinc-100"
                                                 }`}
                                         >
                                             <span className="flex items-center gap-2.5">
