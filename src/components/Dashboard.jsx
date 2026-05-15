@@ -1,3 +1,4 @@
+import Recent from "./Recent";
 
 const dataFetch = async (url, head) => {
     return fetch(`https://mock-backend-hintro.vercel.app${url}`, {
@@ -12,10 +13,12 @@ const dataFetch = async (url, head) => {
 const profile = await dataFetch("/api/auth/profile", "u2");
 const dashboard = await dataFetch("/api/auth/dashboard", "u2");
 const stats = await dataFetch("/api/call-sessions/stats", "u2");
+const recentCalls = await dataFetch("/api/call-sessions?limit=5", "u2");
 
 console.log("Profile:", profile);
 console.log("Dashboard:", dashboard);
 console.log("Stats:", stats);
+console.log("Recent Calls:", recentCalls);
 
 let { totalSessions, averageDuration, totalAIInteractions } = stats;
 const setValue = () => {
@@ -213,7 +216,7 @@ const Dashboard = () => {
                     <main className="px-4 py-5 lg:px-8 lg:py-6">
                         <section className="mb-6 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
                             <div>
-                                <h2 className="text-[30px] font-medium leading-tight">Hi, Name 👋 Welcome to Hintro</h2>
+                                <h2 className="text-[30px] font-medium leading-tight">Hi, {profile?.firstName} 👋 Welcome to Hintro</h2>
                                 <p className="mt-1 text-sm text-zinc-500">Ready to make your next call smarter ?</p>
                             </div>
 
@@ -239,21 +242,7 @@ const Dashboard = () => {
                             })}
                         </section>
 
-                        <section className="mt-10">
-                            <h3 className="mb-3 text-center text-2xl font-semibold">Recent calls</h3>
-                            <div className="mx-auto flex min-h-[290px] w-full max-w-3xl flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-[#f8f8f8] p-8 text-center">
-                                <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-indigo-100 text-indigo-500">
-                                    <DashboardIcon type="calendar" className="size-6" />
-                                </div>
-                                <p className="text-xl font-semibold text-zinc-700">No Recent Calls</p>
-                                <p className="mt-2 max-w-md text-sm text-zinc-400">
-                                    Connect your Google Calendar to see upcoming meetings, get reminders, and join calls directly from Hintro.
-                                </p>
-                                <button className="mt-5 rounded-md border border-zinc-500 px-4 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100">
-                                    Start a Call
-                                </button>
-                            </div>
-                        </section>
+                        <Recent callSessions={recentCalls} profile={profile} />
                     </main>
                 </div>
 
