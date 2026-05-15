@@ -234,8 +234,8 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <button className="hidden items-center gap-2 rounded-md border border-zinc-400 bg-white px-4 py-1.5 text-xs font-medium text-zinc-800 sm:flex">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-3">
+                            <button className="hidden items-center gap-2 rounded-md border border-zinc-400 bg-white px-4 py-1.5 text-sm font-medium text-zinc-800 sm:flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
                                 Watch Tutorial
