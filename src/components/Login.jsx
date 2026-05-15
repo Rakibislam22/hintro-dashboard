@@ -1,12 +1,35 @@
 
+import { useState } from 'react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
 const Login = () => {
+    const [showPassword, setShowPassword] = useState(false);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        if (email === 'u1@gamil.com' || email === 'u2@gmail.com') {
+            if (password === '1234') {
+                localStorage.setItem('profile', JSON.stringify({ email }));
+                window.location.href = '/dashboard';
+            } else {
+                alert('Invalid password, use "1234"');
+            }
+        } else {
+            alert('Invalid email, use u1@gamil.com or u2@gmail.com');
+        }
+
+    };
+
     return (
         <div className="w-full flex items-center justify-center lg:h-screen max-sm:py-16">
             <div className="w-sm">
                 <h2 className="text-3xl font-bold mb-14 text-center">Login</h2>
-                <form>
+                <form onSubmit={handleSubmit}>
                     <div className="mb-8">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
                             Email
                         </label>
                         <label className="input validator h-12 w-full rounded-lg">
@@ -22,15 +45,14 @@ const Login = () => {
                                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                                 </g>
                             </svg>
-                            <input type="email" placeholder="mail@site.com" required />
+                            <input className='text-lg font-medium text-gray-600' type="email" name="email" placeholder="u1@gamil.com" required defaultValue={"u1@gamil.com"} />
                         </label>
-                        <div className="validator-hint hidden">Enter valid email address</div>
                     </div>
                     <div className="mb-10">
                         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
                             Password
                         </label>
-                        <label className="input validator h-12 w-full rounded-lg">
+                        <label className="input validator h-12 w-full rounded-lg relative">
                             <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                 <g
                                     strokeLinejoin="round"
@@ -46,18 +68,26 @@ const Login = () => {
                                 </g>
                             </svg>
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 required
                                 placeholder="Password"
-                                minLength="8"
-                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                                title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
+                                name="password"
+                                defaultValue={"1234"}
+                                className="w-full pr-10 text-lg font-medium text-gray-600"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(s => !s)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 text-lg cursor-pointer"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? (
+                                    <FaEye />
+                                ) : (
+                                    <FaEyeSlash />
+                                )}
+                            </button>
                         </label>
-                        <p className="validator-hint hidden">
-                            Must be more than 8 characters, including
-                            <br />At least one number <br />At least one lowercase letter <br />At least one uppercase letter
-                        </p>
                     </div>
                     <div>
                         <button
