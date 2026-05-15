@@ -1,31 +1,27 @@
+import { useEffect, useState } from "react";
+import Avatar from "./Avatar";
 import Recent from "./Recent";
 
 const dataFetch = async (url, head) => {
-    return fetch(`https://mock-backend-hintro.vercel.app${url}`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "x-user-id": `${head}`
+    try {
+        const response = await fetch(`https://mock-backend-hintro.vercel.app${url}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "x-user-id": `${head}`
+            }
+        });
+
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            throw new Error(payload?.message || payload?.error || `Request failed with status ${response.status}`);
         }
-    }).then((res) => res.json());
-};
 
-const profile = await dataFetch("/api/auth/profile", "u2");
-const dashboard = await dataFetch("/api/auth/dashboard", "u2");
-const stats = await dataFetch("/api/call-sessions/stats", "u2");
-const recentCalls = await dataFetch("/api/call-sessions?limit=5", "u2");
-
-console.log("Profile:", profile);
-console.log("Dashboard:", dashboard);
-console.log("Stats:", stats);
-console.log("Recent Calls:", recentCalls);
-
-let { totalSessions, averageDuration, totalAIInteractions } = stats;
-const setValue = () => {
-    totalSessions = Number.isFinite(Number(totalSessions)) ? Number(totalSessions) : 0;
-    // keep averageDuration numeric (seconds or milliseconds) — format later when rendering
-    averageDuration = Number.isFinite(Number(averageDuration)) ? Number(averageDuration) : 0;
-    totalAIInteractions = Number.isFinite(Number(totalAIInteractions)) ? Number(totalAIInteractions) : 0;
+        return { data: payload, error: null };
+    } catch (error) {
+        return { data: null, error: error instanceof Error ? error.message : "Failed to fetch data" };
+    }
 };
 
 // Format a duration value into "Xm Ysec". Accepts seconds or milliseconds.
@@ -46,8 +42,6 @@ const formatDuration = (value) => {
     const rem = secs % 60;
     return `${mins}m ${rem}sec`;
 };
-
-setValue();
 
 // Format an ISO timestamp into relative time like "5m ago", "2h ago", "3 days ago"
 const formatRelativeTime = (iso) => {
@@ -74,22 +68,12 @@ const formatRelativeTime = (iso) => {
     return `${months}mo ago`;
 };
 
-const lastSessionRaw = Array.isArray(stats?.lastSession) && stats.lastSession.length ? stats.lastSession[0] : null;
-const lastSessionRelative = formatRelativeTime(lastSessionRaw);
-
 const sidebarItems = [
     { label: "Dashboard", active: true, icon: "dashboard" },
     { label: "Call Insights", icon: "phone" },
     { label: "Knowledge Base", icon: "docs", hasInfo: true },
     { label: "Prompts", icon: "chat", hasInfo: true },
     { label: "Boxy Controls", icon: "globe", hasInfo: true },
-];
-
-const statCards = [
-    { title: "Total Sessions", value: totalSessions, color: "bg-red-100", icon: "pie" },
-    { title: "Average Duration", value: averageDuration, color: "bg-cyan-100", icon: "clock" },
-    { title: "AI Used", value: ` ${totalAIInteractions} times`, color: "bg-green-100", icon: "spark" },
-    { title: "Last Session", value: lastSessionRelative || '-', color: "bg-violet-100", icon: "calendar" },
 ];
 
 const DashboardIcon = ({ type, className = "size-4" }) => {
@@ -180,6 +164,59 @@ const InfoBadge = () => (
 );
 
 const Dashboard = () => {
+    const [dashboardState, setDashboardState] = useState({
+        loading: true,
+        profile: {},
+        dashboard: {},
+        stats: {},
+        recentCalls: { callSessions: [] },
+        error: "",
+    });
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadDashboard = async () => {
+            const [profileResult, dashboardResult, statsResult, recentCallsResult] = await Promise.all([
+                dataFetch("/api/auth/profile", "u2"),
+                dataFetch("/api/auth/dashboard", "u2"),
+                dataFetch("/api/call-sessions/stats", "u2"),
+                dataFetch("/api/call-sessions?limit=5", "u2"),
+            ]);
+
+            if (!isMounted) return;
+
+            setDashboardState({
+                loading: false,
+                profile: profileResult.data || {},
+                dashboard: dashboardResult.data || {},
+                stats: statsResult.data || {},
+                recentCalls: recentCallsResult.data || { callSessions: [] },
+                error: profileResult.error || dashboardResult.error || statsResult.error || recentCallsResult.error || "",
+            });
+        };
+
+        loadDashboard();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const { loading, profile, dashboard, stats, recentCalls, error: apiError } = dashboardState;
+
+    const totalSessions = Number.isFinite(Number(stats?.totalSessions)) ? Number(stats.totalSessions) : 0;
+    const averageDuration = Number.isFinite(Number(stats?.averageDuration)) ? Number(stats.averageDuration) : 0;
+    const totalAIInteractions = Number.isFinite(Number(stats?.totalAIInteractions)) ? Number(stats.totalAIInteractions) : 0;
+    const lastSessionRaw = Array.isArray(stats?.lastSession) && stats.lastSession.length ? stats.lastSession[0] : null;
+    const lastSessionRelative = formatRelativeTime(lastSessionRaw);
+    const statCards = [
+        { title: "Total Sessions", value: totalSessions, color: "bg-red-100", icon: "pie" },
+        { title: "Average Duration", value: averageDuration, color: "bg-cyan-100", icon: "clock" },
+        { title: "AI Used", value: ` ${totalAIInteractions} times`, color: "bg-green-100", icon: "spark" },
+        { title: "Last Session", value: lastSessionRelative || '-', color: "bg-violet-100", icon: "calendar" },
+    ];
+
     return (
         <div className="min-h-screen bg-[#f7f7f8] text-zinc-800">
             <div className="drawer lg:drawer-open">
@@ -204,19 +241,24 @@ const Dashboard = () => {
                                 Watch Tutorial
                             </button>
 
-                            <button className="flex items-center gap-2 rounded-full p-1.5 hover:bg-zinc-100">
-                                <div className="size-7 rounded-full bg-[url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=60')] bg-cover bg-center" />
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3 text-zinc-500">
-                                    <path d="m6 9 6 6 6-6" />
-                                </svg>
-                            </button>
+                            <Avatar profile={profile} />
                         </div>
                     </header>
 
                     <main className="px-4 py-5 lg:px-8 lg:py-6">
+                        {apiError ? (
+                            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                Server error: {apiError}. Showing available data only.
+                            </div>
+                        ) : null}
+
                         <section className="mb-6 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
                             <div>
-                                <h2 className="text-[30px] font-medium leading-tight">Hi, {profile?.firstName} 👋 Welcome to Hintro</h2>
+                                {loading ? (
+                                    <div className="h-9 w-80 animate-pulse rounded-md bg-zinc-200/80" />
+                                ) : (
+                                    <h2 className="text-[30px] font-medium leading-tight">Hi, {profile?.firstName} 👋 Welcome to Hintro</h2>
+                                )}
                                 <p className="mt-1 text-sm text-zinc-500">Ready to make your next call smarter ?</p>
                             </div>
 
@@ -234,7 +276,7 @@ const Dashboard = () => {
                                             </div>
                                             <div>
                                                 <h3 className="text-sm sm:text-lg font-medium leading-none">{card.title}</h3>
-                                                <p className="mt-2 text-lg sm:text-2xl font-bold leading-none">{displayValue}</p>
+                                                <p className="mt-2 text-lg sm:text-2xl font-bold leading-none">{loading ? <span className="inline-block h-6 w-16 animate-pulse rounded bg-zinc-200" /> : displayValue}</p>
                                             </div>
                                         </div>
                                     </article>
@@ -242,7 +284,7 @@ const Dashboard = () => {
                             })}
                         </section>
 
-                        <Recent callSessions={recentCalls} profile={profile} />
+                        <Recent callSessions={recentCalls} profile={profile} apiError={apiError} loading={loading} />
                     </main>
                 </div>
 

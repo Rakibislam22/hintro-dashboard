@@ -1,5 +1,5 @@
 
-const Recent = ({ profile, callSessions: callSessionsData }) => {
+const Recent = ({ profile, callSessions: callSessionsData, apiError, loading }) => {
     return (
         <div>
             <section className="mt-10">
@@ -25,6 +25,48 @@ const Recent = ({ profile, callSessions: callSessionsData }) => {
                         if (Number.isNaN(d.getTime())) return '';
                         return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
                     };
+
+                    if (loading) {
+                        return (
+                            <div className="mx-auto w-full max-w-4xl rounded-2xl border border-zinc-200 bg-white px-4 py-6">
+                                <div className="mb-4 h-5 w-40 animate-pulse rounded bg-zinc-200" />
+                                <div className="space-y-4">
+                                    {[...Array(4)].map((_, index) => (
+                                        <div key={index} className="flex items-center justify-between rounded-lg px-2 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-8 w-8 animate-pulse rounded-md bg-zinc-200" />
+                                                <div className="space-y-2">
+                                                    <div className="h-4 w-44 animate-pulse rounded bg-zinc-200" />
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-4 w-4 animate-pulse rounded bg-zinc-200" />
+                                                        <div className="h-4 w-4 animate-pulse rounded bg-zinc-200" />
+                                                        <div className="h-4 w-4 animate-pulse rounded bg-zinc-200" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="h-4 w-16 animate-pulse rounded bg-zinc-200" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    if (apiError) {
+                        return (
+                            <div className="mx-auto flex min-h-[290px] w-full max-w-3xl flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+                                <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-6">
+                                        <path d="M12 9v4" />
+                                        <path d="M12 17h.01" />
+                                        <path d="M10.3 4.3h3.4L22 16.6v3.4H2v-3.4L10.3 4.3Z" />
+                                    </svg>
+                                </div>
+                                <p className="text-xl font-semibold text-red-700">Recent calls unavailable</p>
+                                <p className="mt-2 max-w-md text-sm text-red-600">{apiError}</p>
+                            </div>
+                        );
+                    }
 
                     if (!callSessions.length) {
                         return (
@@ -74,20 +116,20 @@ const Recent = ({ profile, callSessions: callSessionsData }) => {
                     return (
                         <div className="w-full max-w-4xl mx-auto">
                             {orderedKeys.map((k) => (
-                                <div key={k} className="mb-6">
-                                    <div className="mb-3 px-3 text-sm font-medium text-zinc-500">{formatHeading(groups[k].date)}</div>
-                                    <div className="space-y-3">
+                                <div key={k} className="mb-5">
+                                    <div className="px-3 text-sm font-medium text-zinc-500">{formatHeading(groups[k].date)}</div>
+                                    <div>
                                         {groups[k].items.map((it, idx) => (
                                             <div key={idx} className="flex items-center justify-between  px-4 py-3 ">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 flex items-center justify-center rounded-md bg-violet-500 text-white font-bold">{(profile?.firstName || 'D').charAt(0)}</div>
+                                                    <div className="h-9 w-9 flex items-center justify-center rounded-md bg-violet-500 text-white font-bold">{(profile?.firstName || 'D').charAt(0)}</div>
                                                     <div>
-                                                        <div className="text-sm font-medium">{it.title}</div>
+                                                        <div className="text-sm mb-1 font-medium">{it.title}</div>
                                                         <div className="text-xs text-zinc-400 flex items-center">
                                                             {Array.isArray(it.participants) && it.participants.length > 0 ? (
                                                                 <div className="flex items-center">
                                                                     {it.participants.slice(0, 3).map((p, pi) => {
-                                                                        const src = p?.avatar || p?.photo || p?.image || null;
+                                                                        const src = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp';
                                                                         return src ? (
                                                                             <img
                                                                                 key={pi}
