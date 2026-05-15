@@ -16,7 +16,9 @@ const Avatar = ({ profile }) => {
                     <li className="text-violet-400 text-lg font-bold pl-2">
                         {profile?.firstName}
                     </li>
-                    <li className="text-red-400 font-bold"><a>Logout</a></li>
+                    <li className="text-red-400 font-bold">
+                        <span onClick={() => document.getElementById('my_modal_1').showModal()}>Logout</span>
+                    </li>
                 </ul>
             </div>
         </div>

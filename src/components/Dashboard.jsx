@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Avatar from "./Avatar";
 import Recent from "./Recent";
+import { Link, useNavigate } from "react-router";
 
 const dataFetch = async (url, head) => {
     try {
@@ -173,15 +174,25 @@ const Dashboard = () => {
         error: "",
     });
 
+  const navigate = useNavigate();
+
     useEffect(() => {
         let isMounted = true;
 
+        const storedProfile = localStorage.getItem('profile');
+        if (!storedProfile) {
+            navigate('/');
+            return;
+        }
+        const { email } = JSON.parse(storedProfile);
+        const userId = email === 'u1@gmail.com' ? 'u1' : 'u2';
+
         const loadDashboard = async () => {
             const [profileResult, dashboardResult, statsResult, recentCallsResult] = await Promise.all([
-                dataFetch("/api/auth/profile", "u2"),
-                dataFetch("/api/auth/dashboard", "u2"),
-                dataFetch("/api/call-sessions/stats", "u2"),
-                dataFetch("/api/call-sessions?limit=5", "u2"),
+                dataFetch("/api/auth/profile", userId),
+                dataFetch("/api/auth/dashboard", userId),
+                dataFetch("/api/call-sessions/stats", userId),
+                dataFetch("/api/call-sessions?limit=5", userId),
             ]);
 
             if (!isMounted) return;
@@ -343,6 +354,23 @@ const Dashboard = () => {
                     </div>
                 </aside>
             </div>
+
+
+            <dialog id="my_modal_1" className="modal">
+                <div className="modal-box max-w-md rounded-lg p-6 shadow-xl">
+                    <h3 className="text-xl font-semibold mb-3">Leaving already?</h3>
+                    <div className="border-b border-zinc-200 mb-4" />
+                    <p className="text-sm text-zinc-600 mb-6">You can log back in anytime to continue your meetings with Hintro.</p>
+                    <div className="modal-action flex items-center justify-between gap-4">
+                        <form method="dialog">
+                            <button className="btn btn-outline">Cancel</button>
+                        </form>
+                        <Link to="/" className="btn btn-primary hover:bg-zinc-800" onClick={()=>{localStorage.removeItem('profile'); }} >
+                            Log out
+                        </Link>
+                    </div>
+                </div>
+            </dialog>
         </div>
     );
 };

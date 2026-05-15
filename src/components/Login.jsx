@@ -1,24 +1,26 @@
 
 import { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useNavigate } from 'react-router';
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const email = formData.get('email');
         const password = formData.get('password');
-        if (email === 'u1@gamil.com' || email === 'u2@gmail.com') {
+        if (email === 'u1@gmail.com' || email === 'u2@gmail.com') {
             if (password === '1234') {
                 localStorage.setItem('profile', JSON.stringify({ email }));
-                window.location.href = '/dashboard';
+                navigate('/dashboard');
             } else {
                 alert('Invalid password, use "1234"');
             }
         } else {
-            alert('Invalid email, use u1@gamil.com or u2@gmail.com');
+            alert('Invalid email, use u1@gmail.com or u2@gmail.com');
         }
 
     };
@@ -45,7 +47,7 @@ const Login = () => {
                                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                                 </g>
                             </svg>
-                            <input className='text-lg font-medium text-gray-600' type="email" name="email" placeholder="u1@gamil.com" required defaultValue={"u1@gamil.com"} />
+                            <input className='text-lg font-medium text-gray-600' type="email" name="email" placeholder="u1@gmail.com" required defaultValue={"u1@gmail.com"} />
                         </label>
                     </div>
                     <div className="mb-10">
