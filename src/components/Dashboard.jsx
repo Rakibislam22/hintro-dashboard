@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Avatar from "./Avatar";
 import Recent from "./Recent";
 import { Link, useNavigate } from "react-router";
+import { RiChatDownloadFill } from "react-icons/ri";
+import { HiGift } from "react-icons/hi";
 
 const dataFetch = async (url, head) => {
     try {
@@ -174,7 +176,7 @@ const Dashboard = () => {
         error: "",
     });
 
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
     useEffect(() => {
         let isMounted = true;
@@ -212,7 +214,7 @@ const Dashboard = () => {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [navigate]);
 
     const { loading, profile, dashboard, stats, recentCalls, error: apiError } = dashboardState;
 
@@ -221,6 +223,10 @@ const Dashboard = () => {
     const totalAIInteractions = Number.isFinite(Number(stats?.totalAIInteractions)) ? Number(stats.totalAIInteractions) : 0;
     const lastSessionRaw = Array.isArray(stats?.lastSession) && stats.lastSession.length ? stats.lastSession[0] : null;
     const lastSessionRelative = formatRelativeTime(lastSessionRaw);
+    const kbFilesUsage = dashboard?.usage?.kb_files || null;
+    const planLabel = dashboard?.subscription?.plan
+        ? dashboard.subscription.plan.charAt(0).toUpperCase() + dashboard.subscription.plan.slice(1)
+        : "Free";
     const statCards = [
         { title: "Total Sessions", value: totalSessions, color: "bg-red-100", icon: "pie" },
         { title: "Average Duration", value: averageDuration, color: "bg-cyan-100", icon: "clock" },
@@ -304,7 +310,7 @@ const Dashboard = () => {
 
                     <div className="flex min-h-full w-64 flex-col bg-[#f3f3f3]">
                         <div className="flex h-14 items-center border-b border-zinc-200 px-6">
-                            <h2 className="text-[31px] font-medium tracking-tight">Hintro</h2>
+                            <h2 className="pl-8 text-2xl font-medium tracking-tight">Hintro</h2>
                         </div>
 
                         <nav className="flex-1 px-2 py-4">
@@ -318,7 +324,7 @@ const Dashboard = () => {
                                                 }`}
                                         >
                                             <span className="flex items-center gap-2.5">
-                                                <DashboardIcon type={item.icon} className="size-4" />
+                                                <DashboardIcon type={item.icon} className="size-5" />
                                                 {item.label}
                                             </span>
                                             {item.hasInfo && <InfoBadge />}
@@ -330,26 +336,35 @@ const Dashboard = () => {
 
                         <div className="border-t border-zinc-200 px-2 py-4">
                             <button className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-                                    <path d="M14 3h7v7" />
-                                    <path d="M10 14 21 3" />
-                                    <path d="M21 14v7h-7" />
-                                    <path d="M3 10 14 21" />
-                                </svg>
+                                <RiChatDownloadFill className="text-lg" />
                                 Feedback History
                             </button>
 
                             <button className="mb-4 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-                                    <path d="M12 4v16M4 12h16" />
-                                    <path d="M5 5h14v14H5z" />
-                                </svg>
+                                <HiGift className="text-lg" />
                                 Feedback
                             </button>
 
-                            <button className="h-8 w-full rounded-lg border border-zinc-400 bg-zinc-600 text-sm font-medium text-zinc-100 shadow-[0_2px_6px_rgba(0,0,0,0.2)] hover:bg-zinc-700">
-                                Upgrade
-                            </button>
+                            <div className="rounded-2xl bg-[#efefef] p-4">
+                                <div className="mb-4 flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-medium text-zinc-800">{loading ? <span className="inline-block h-4 w-24 animate-pulse rounded bg-zinc-200" /> : `${kbFilesUsage?.used ?? 0} of ${kbFilesUsage?.limit ?? 0} used`}</p>
+                                        <p className="mt-1 text-xs text-zinc-500">Plan: {planLabel}</p>
+                                    </div>
+                                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-zinc-700 shadow-sm">{loading ? '...' : `${kbFilesUsage?.percentage ?? 0}%`}</span>
+                                </div>
+
+                                <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-200">
+                                    <div
+                                        className="h-full rounded-full bg-zinc-600 transition-all"
+                                        style={{ width: `${kbFilesUsage?.percentage ?? 0}%` }}
+                                    />
+                                </div>
+
+                                <button className="h-10 w-full rounded-lg border border-zinc-400 bg-zinc-600 text-sm font-medium text-zinc-100 shadow-[0_2px_6px_rgba(0,0,0,0.2)] hover:bg-zinc-700">
+                                    Upgrade
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </aside>
@@ -365,7 +380,7 @@ const Dashboard = () => {
                         <form method="dialog">
                             <button className="btn btn-outline">Cancel</button>
                         </form>
-                        <Link to="/" className="btn btn-primary hover:bg-zinc-800" onClick={()=>{localStorage.removeItem('profile'); }} >
+                        <Link to="/" className="btn btn-primary hover:bg-zinc-800" onClick={() => { localStorage.removeItem('profile'); }} >
                             Log out
                         </Link>
                     </div>
