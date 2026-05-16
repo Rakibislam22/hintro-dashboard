@@ -166,6 +166,14 @@ const InfoBadge = () => (
     <span className="flex size-4 items-center justify-center rounded-full border border-zinc-700 text-[10px] font-bold text-zinc-700">i</span>
 );
 
+const feedbackPrompts = {
+    1: "What frustrated you or felt confusing?",
+    2: "What frustrated you or felt confusing?",
+    3: "What could have made this better?",
+    4: "What did you like the most?",
+    5: "What did you like the most?",
+};
+
 const Dashboard = () => {
     const [dashboardState, setDashboardState] = useState({
         loading: true,
@@ -175,8 +183,30 @@ const Dashboard = () => {
         recentCalls: { callSessions: [] },
         error: "",
     });
+    const [feedbackState, setFeedbackState] = useState({
+        rating: 0,
+        comment: "",
+    });
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
     const navigate = useNavigate();
+
+    const openFeedbackModal = () => {
+        setFeedbackState({ rating: 0, comment: "" });
+        setFeedbackSubmitted(false);
+        document.getElementById("feedback_modal")?.showModal();
+    };
+
+    const closeFeedbackModal = () => {
+        setFeedbackState({ rating: 0, comment: "" });
+        setFeedbackSubmitted(false);
+        document.getElementById("feedback_modal")?.close();
+    };
+
+    const submitFeedback = () => {
+        // send feedback to backend (TODO)
+        setFeedbackSubmitted(true);
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -340,7 +370,7 @@ const Dashboard = () => {
                                 Feedback History
                             </button>
 
-                            <button className="mb-4 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                            <button className="mb-4 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-200 cursor-pointer" type="button" onClick={openFeedbackModal}>
                                 <HiGift className="text-lg" />
                                 Feedback
                             </button>
@@ -370,7 +400,7 @@ const Dashboard = () => {
                 </aside>
             </div>
 
-
+            {/* modal for leaving */}
             <dialog id="my_modal_1" className="modal">
                 <div className="modal-box max-w-md rounded-lg p-6 shadow-xl">
                     <h3 className="text-xl font-semibold mb-3">Leaving already?</h3>
@@ -384,6 +414,91 @@ const Dashboard = () => {
                             Log out
                         </Link>
                     </div>
+                </div>
+            </dialog>
+
+            {/* modal for feedback */}
+            <dialog id="feedback_modal" className="modal">
+                <div className="modal-box relative min-h-104 max-w-3xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
+                    <button
+                        type="button"
+                        onClick={() => { closeFeedbackModal(); setFeedbackSubmitted(false); }}
+                        className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600"
+                        aria-label="Close feedback dialog"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <div className="mb-8">
+                        <h3 className="text-3xl font-medium tracking-tight text-zinc-900">Give Feedback</h3>
+                        <p className="mt-1 text-sm text-zinc-400">Describe your experience using Hintro...</p>
+                    </div>
+
+                    {feedbackSubmitted ? (
+                        <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
+                            <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 17.27 5.82 21l1.64-6.16L2 10.24l6.37-.51L12 3.8l1.63 5.93L20 10.24l-5.46 4.6L16.18 21z" />
+                                </svg>
+                            </div>
+                            <h4 className="text-xl font-semibold">Thank you for your feedback!!</h4>
+                            <p className="max-w-md text-sm text-zinc-500">Our team reviews every suggestion to improve AI responses, workflows, and overall experience.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mb-8 flex items-center justify-center gap-4 sm:gap-5">
+                                {[1, 2, 3, 4, 5].map((rating) => {
+                                    const isActive = feedbackState.rating >= rating;
+                                    return (
+                                        <button
+                                            key={rating}
+                                            type="button"
+                                            onClick={() => setFeedbackState((current) => ({ ...current, rating }))}
+                                            className={`transition-transform duration-150 hover:scale-110 ${isActive ? "text-amber-400" : "text-zinc-300"}`}
+                                            aria-label={`${rating} star${rating > 1 ? "s" : ""}`}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-11 w-11 sm:h-12 sm:w-12">
+                                                <path d="m12 17.27 5.18 3.73-1.64-6.16L20 10.24l-6.37-.51L12 3.8l-1.63 5.93L4 10.24l4.46 4.6-1.64 6.16L12 17.27Z" />
+                                            </svg>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {feedbackState.rating > 0 ? (
+                                <div className="mb-10">
+                                    <label className="mb-1 block text-sm text-zinc-400">
+                                        {feedbackPrompts[feedbackState.rating] || "What did you think about the experience?"}
+                                    </label>
+                                    <textarea
+                                        value={feedbackState.comment}
+                                        onChange={(event) => setFeedbackState((current) => ({ ...current, comment: event.target.value }))}
+                                        placeholder="Share your thoughts here..."
+                                        className="min-h-40 w-full resize-none rounded-md border border-zinc-200 bg-white p-4 text-sm text-zinc-700 outline-none transition focus:border-zinc-400"
+                                    />
+                                </div>
+                            ) : null}
+
+                            <div className={`flex items-center justify-between gap-4 ${feedbackState.rating === 0 ? 'pt-18 px-12' : ''}`}>
+                                <button type="button" onClick={closeFeedbackModal} className="btn btn-outline min-w-24 gap-2 rounded-md font-normal normal-case">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                                        <path d="M15 18l-6-6 6-6" />
+                                    </svg>
+                                    Back
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={submitFeedback}
+                                    disabled={feedbackState.rating === 0}
+                                    className="btn min-w-24 rounded-md border-0 bg-zinc-400 font-normal text-white normal-case hover:bg-zinc-500 disabled:bg-zinc-300"
+                                >
+                                    Submit
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </dialog>
         </div>
