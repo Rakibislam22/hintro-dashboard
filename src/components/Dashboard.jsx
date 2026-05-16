@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import Avatar from "./Avatar";
 
-import { Link, NavLink, Outlet, useNavigate } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { RiChatDownloadFill } from "react-icons/ri";
 import { HiGift } from "react-icons/hi";
-import DashboardElement from "./DashboardElement";
 
 const dataFetch = async (url, head) => {
     try {
@@ -68,13 +67,6 @@ const formatRelativeTime = (iso) => {
     return `${months}mo ago`;
 };
 
-let sidebarItems = [
-    { label: "Dashboard", active: window.location.pathname === "/dashboard" ? true : false, icon: "dashboard" },
-    { label: "Call Insights", icon: "phone" },
-    { label: "Knowledge Base", icon: "docs", hasInfo: true },
-    { label: "Prompts", icon: "chat", hasInfo: true },
-    { label: "Boxy Controls", icon: "globe", hasInfo: true },
-];
 
 const DashboardIcon = ({ type, className = "size-4" }) => {
     if (type === "dashboard") {
@@ -304,6 +296,18 @@ const Dashboard = () => {
 
     const canSubmitFeedback = feedbackState.rating > 0 && feedbackState.comment.trim() !== '' && !feedbackSubmitted;
 
+    const location = useLocation();
+
+    let sidebarItems = [
+        { label: "Dashboard", active: location.pathname === "/dashboard/home" ? true : false, path: "/dashboard/home", icon: "dashboard" },
+        { label: "Call Insights", icon: "phone" },
+        { label: "Knowledge Base", icon: "docs", hasInfo: true },
+        { label: "Prompts", icon: "chat", hasInfo: true },
+        { label: "Boxy Controls", icon: "globe", hasInfo: true },
+    ];
+
+
+
     return (
         <div className="min-h-screen bg-[#f7f7f8] text-zinc-800">
             <div className="drawer lg:drawer-open">
@@ -348,7 +352,9 @@ const Dashboard = () => {
                             <ul className="space-y-1.5">
                                 {sidebarItems.map((item) => (
                                     <li key={item.label}>
-                                        <button
+                                        {item.label === "Dashboard" ? (
+                                            <NavLink
+                                            to={item.path}
                                             className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
                                                 ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
                                                 : "text-zinc-700 hover:bg-zinc-100"
@@ -359,14 +365,28 @@ const Dashboard = () => {
                                                 {item.label}
                                             </span>
                                             {item.hasInfo && <InfoBadge />}
-                                        </button>
+                                        </NavLink>) :
+                                        (<button
+                                        to={item.path}
+                                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
+                                                ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
+                                                : "text-zinc-700 hover:bg-zinc-100"
+                                                }`}
+                                        >
+                                            <span className="flex items-center gap-2.5">
+                                                <DashboardIcon type={item.icon} className="size-5" />
+                                                {item.label}
+                                            </span>
+                                            {item.hasInfo && <InfoBadge />}
+                                        </button>)}
+
                                     </li>
                                 ))}
                             </ul>
                         </nav>
 
                         <div className="border-t border-zinc-200 px-2 py-4">
-                            <NavLink className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                            <NavLink to={"/dashboard/feedback-history"} className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
                                 <RiChatDownloadFill className="text-lg" />
                                 Feedback History
                             </NavLink>
