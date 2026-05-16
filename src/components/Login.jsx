@@ -15,7 +15,7 @@ const Login = () => {
         if (email === 'u1@gmail.com' || email === 'u2@gmail.com') {
             if (password === '1234') {
                 localStorage.setItem('profile', JSON.stringify({ email }));
-                navigate('/dashboard');
+                navigate('/dashboard/home');
             } else {
                 alert('Invalid password, use "1234"');
             }

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import Avatar from "./Avatar";
-import Recent from "./Recent";
-import { Link, useNavigate } from "react-router";
+
+import { Link, NavLink, Outlet, useNavigate } from "react-router";
 import { RiChatDownloadFill } from "react-icons/ri";
 import { HiGift } from "react-icons/hi";
+import DashboardElement from "./DashboardElement";
 
 const dataFetch = async (url, head) => {
     try {
@@ -27,16 +28,13 @@ const dataFetch = async (url, head) => {
     }
 };
 
-// Format a duration value into "Xm Ysec". Accepts seconds or milliseconds.
 const formatDuration = (value) => {
-    // If already formatted like "14m 22sec", return as-is
     if (typeof value === 'string' && value.includes('m') && value.includes('sec')) return value;
     if (value == null) return '0m 0sec';
 
     let secs = Number(value);
     if (!Number.isFinite(secs)) return '0m 0sec';
 
-    // API returns seconds; treat value as seconds and round
     secs = Math.round(secs);
 
     if (secs < 0) return '0m 0sec';
@@ -46,7 +44,6 @@ const formatDuration = (value) => {
     return `${mins}m ${rem}sec`;
 };
 
-// Format an ISO timestamp into relative time like "5m ago", "2h ago", "3 days ago"
 const formatRelativeTime = (iso) => {
     if (!iso) return '-';
     const d = new Date(iso);
@@ -71,8 +68,8 @@ const formatRelativeTime = (iso) => {
     return `${months}mo ago`;
 };
 
-const sidebarItems = [
-    { label: "Dashboard", active: true, icon: "dashboard" },
+let sidebarItems = [
+    { label: "Dashboard", active: window.location.pathname === "/dashboard" ? true : false, icon: "dashboard" },
     { label: "Call Insights", icon: "phone" },
     { label: "Knowledge Base", icon: "docs", hasInfo: true },
     { label: "Prompts", icon: "chat", hasInfo: true },
@@ -204,8 +201,6 @@ const Dashboard = () => {
     };
 
     const submitFeedback = () => {
-        // send feedback to backend (TODO)
-        // persist feedback locally
         try {
             const now = new Date();
             const formatDisplayDate = (iso) => {
@@ -229,6 +224,7 @@ const Dashboard = () => {
                 return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             };
 
+            const { profile, dashboard } = dashboardState;
             const entry = {
                 title: dashboard?.dashboardTitle || `${profile?.firstName ?? 'My'} First Call`,
                 rating: feedbackState.rating,
@@ -243,7 +239,6 @@ const Dashboard = () => {
             existing.unshift(entry);
             localStorage.setItem(key, JSON.stringify(existing));
         } catch (err) {
-            // ignore storage errors
             console.warn('Failed saving feedback locally', err);
         }
 
@@ -287,6 +282,7 @@ const Dashboard = () => {
             isMounted = false;
         };
     }, [navigate]);
+
 
     const { loading, profile, dashboard, stats, recentCalls, error: apiError } = dashboardState;
 
@@ -336,47 +332,8 @@ const Dashboard = () => {
                         </div>
                     </header>
 
-                    <main className="px-4 py-5 lg:px-8 lg:py-6">
-                        {apiError ? (
-                            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                Server error: {apiError}. Showing available data only.
-                            </div>
-                        ) : null}
 
-                        <section className="mb-6 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
-                            <div>
-                                {loading ? (
-                                    <div className="h-9 w-80 animate-pulse rounded-md bg-zinc-200/80" />
-                                ) : (
-                                    <h2 className="text-[30px] font-medium leading-tight">Hi, {profile?.firstName} 👋 Welcome to Hintro</h2>
-                                )}
-                                <p className="mt-1 text-sm text-zinc-500">Ready to make your next call smarter ?</p>
-                            </div>
-
-                            <button className="rounded-md bg-black px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800">Start New Call</button>
-                        </section>
-
-                        <section className="grid gap-3 grid-cols-2 xl:grid-cols-4">
-                            {statCards.map((card) => {
-                                const displayValue = card.title === 'Average Duration' ? formatDuration(card.value) : (card.value ?? 0);
-                                return (
-                                    <article key={card.title} className="rounded-xl border border-zinc-300 bg-[#f4f4f4] px-2 sm:px-4 py-3">
-                                        <div className="flex items-center gap-3 md:gap-6">
-                                            <div className={`flex size-10 sm:size-15 items-center justify-center rounded-xl text-zinc-700 ${card.color}`}>
-                                                <DashboardIcon type={card.icon} className="size-7" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm sm:text-lg font-medium leading-none">{card.title}</h3>
-                                                <p className="mt-2 text-lg sm:text-2xl font-bold leading-none">{loading ? <span className="inline-block h-6 w-16 animate-pulse rounded bg-zinc-200" /> : displayValue}</p>
-                                            </div>
-                                        </div>
-                                    </article>
-                                );
-                            })}
-                        </section>
-
-                        <Recent callSessions={recentCalls} profile={profile} apiError={apiError} loading={loading} />
-                    </main>
+                    <Outlet context={{ apiError, loading, profile, statCards, formatDuration, recentCalls }} />
                 </div>
 
                 <aside className="drawer-side border-r border-zinc-200">
@@ -409,10 +366,10 @@ const Dashboard = () => {
                         </nav>
 
                         <div className="border-t border-zinc-200 px-2 py-4">
-                            <button className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                            <NavLink className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
                                 <RiChatDownloadFill className="text-lg" />
                                 Feedback History
-                            </button>
+                            </NavLink>
 
                             <button className="mb-4 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-200 cursor-pointer" type="button" onClick={openFeedbackModal}>
                                 <HiGift className="text-lg" />

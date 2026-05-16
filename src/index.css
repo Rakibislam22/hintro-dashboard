@@ -8,3 +8,7 @@
   --color-primary: black;
   --color-secondary: rgba(0, 0, 0, 0.5);
 }
+
+nav a.active {
+  @apply bg-[#e8ecff] font-medium text-[#4f6ef8];
+} 
