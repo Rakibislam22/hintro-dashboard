@@ -335,7 +335,7 @@ const Dashboard = () => {
                                     <path d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </label>
-                            <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+                            <h1 className="text-xl font-semibold tracking-tight">{location.pathname === "/dashboard/home" ? "Dashboard" : "Feedback History"}</h1>
                         </div>
 
                         <div className="flex items-center gap-3">
