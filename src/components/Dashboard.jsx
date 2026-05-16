@@ -205,6 +205,48 @@ const Dashboard = () => {
 
     const submitFeedback = () => {
         // send feedback to backend (TODO)
+        // persist feedback locally
+        try {
+            const now = new Date();
+            const formatDisplayDate = (iso) => {
+                const d = new Date(iso);
+                const day = d.getDate();
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const daySuffix = (n) => {
+                    if (n >= 11 && n <= 13) return 'th';
+                    switch (n % 10) {
+                        case 1: return 'st';
+                        case 2: return 'nd';
+                        case 3: return 'rd';
+                        default: return 'th';
+                    }
+                };
+                return `${day}${daySuffix(day)} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+            };
+
+            const formatTime = (iso) => {
+                const d = new Date(iso);
+                return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            };
+
+            const entry = {
+                title: dashboard?.dashboardTitle || `${profile?.firstName ?? 'My'} First Call`,
+                rating: feedbackState.rating,
+                description: feedbackState.comment || '',
+                date: formatDisplayDate(now.toISOString()),
+                time: formatTime(now.toISOString()),
+                iso: now.toISOString(),
+            };
+
+            const key = 'hintro_feedbacks';
+            const existing = JSON.parse(localStorage.getItem(key) || '[]');
+            existing.unshift(entry);
+            localStorage.setItem(key, JSON.stringify(existing));
+        } catch (err) {
+            // ignore storage errors
+            console.warn('Failed saving feedback locally', err);
+        }
+
         setFeedbackSubmitted(true);
     };
 
@@ -263,6 +305,8 @@ const Dashboard = () => {
         { title: "AI Used", value: ` ${totalAIInteractions} times`, color: "bg-green-100", icon: "spark" },
         { title: "Last Session", value: lastSessionRelative || '-', color: "bg-violet-100", icon: "calendar" },
     ];
+
+    const canSubmitFeedback = feedbackState.rating > 0 && feedbackState.comment.trim() !== '' && !feedbackSubmitted;
 
     return (
         <div className="min-h-screen bg-[#f7f7f8] text-zinc-800">
@@ -491,7 +535,8 @@ const Dashboard = () => {
                                 <button
                                     type="button"
                                     onClick={submitFeedback}
-                                    disabled={feedbackState.rating === 0}
+                                    disabled={!canSubmitFeedback}
+                                    aria-disabled={!canSubmitFeedback}
                                     className="btn min-w-24 rounded-md border-0 bg-zinc-400 font-normal text-white normal-case hover:bg-zinc-500 disabled:bg-zinc-300"
                                 >
                                     Submit
