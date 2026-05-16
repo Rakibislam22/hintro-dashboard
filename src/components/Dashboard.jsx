@@ -217,10 +217,24 @@ const Dashboard = () => {
             };
 
             const { profile, dashboard } = dashboardState;
+            // derive a simple user id for local persistence (matches backend mapping)
+            const storedProfileForEntry = localStorage.getItem('profile');
+            let entryUserId = 'unknown';
+            try {
+                if (storedProfileForEntry) {
+                    const parsed = JSON.parse(storedProfileForEntry);
+                    entryUserId = parsed?.email === 'u1@gmail.com' ? 'u1' : 'u2';
+                } else if (profile?.email) {
+                    entryUserId = profile.email === 'u1@gmail.com' ? 'u1' : 'u2';
+                }
+            } catch (e) {
+                entryUserId = profile?.email === 'u1@gmail.com' ? 'u1' : 'u2';
+            }
             const entry = {
                 title: dashboard?.dashboardTitle || `${profile?.firstName ?? 'My'} First Call`,
                 rating: feedbackState.rating,
                 description: feedbackState.comment || '',
+                userId: entryUserId,
                 date: formatDisplayDate(now.toISOString()),
                 time: formatTime(now.toISOString()),
                 iso: now.toISOString(),
@@ -354,31 +368,31 @@ const Dashboard = () => {
                                     <li key={item.label}>
                                         {item.label === "Dashboard" ? (
                                             <NavLink
-                                            to={item.path}
-                                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
-                                                ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
-                                                : "text-zinc-700 hover:bg-zinc-100"
-                                                }`}
-                                        >
-                                            <span className="flex items-center gap-2.5">
-                                                <DashboardIcon type={item.icon} className="size-5" />
-                                                {item.label}
-                                            </span>
-                                            {item.hasInfo && <InfoBadge />}
-                                        </NavLink>) :
-                                        (<button
-                                        to={item.path}
-                                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
-                                                ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
-                                                : "text-zinc-700 hover:bg-zinc-100"
-                                                }`}
-                                        >
-                                            <span className="flex items-center gap-2.5">
-                                                <DashboardIcon type={item.icon} className="size-5" />
-                                                {item.label}
-                                            </span>
-                                            {item.hasInfo && <InfoBadge />}
-                                        </button>)}
+                                                to={item.path}
+                                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
+                                                    ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
+                                                    : "hover:bg-[#e8ecff]"
+                                                    }`}
+                                            >
+                                                <span className="flex items-center gap-2.5">
+                                                    <DashboardIcon type={item.icon} className="size-5" />
+                                                    {item.label}
+                                                </span>
+                                                {item.hasInfo && <InfoBadge />}
+                                            </NavLink>) :
+                                            (<button
+                                                to={item.path}
+                                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm ${item.active
+                                                    ? "bg-[#e8ecff] font-medium text-[#4f6ef8]"
+                                                    : "text-zinc-700 hover:bg-zinc-100"
+                                                    }`}
+                                            >
+                                                <span className="flex items-center gap-2.5">
+                                                    <DashboardIcon type={item.icon} className="size-5" />
+                                                    {item.label}
+                                                </span>
+                                                {item.hasInfo && <InfoBadge />}
+                                            </button>)}
 
                                     </li>
                                 ))}
@@ -386,7 +400,7 @@ const Dashboard = () => {
                         </nav>
 
                         <div className="border-t border-zinc-200 px-2 py-4">
-                            <NavLink to={"/dashboard/feedback-history"} className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100">
+                            <NavLink to={"/dashboard/feedback-history"} className="hover:bg-[#e8ecff] mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700">
                                 <RiChatDownloadFill className="text-lg" />
                                 Feedback History
                             </NavLink>
